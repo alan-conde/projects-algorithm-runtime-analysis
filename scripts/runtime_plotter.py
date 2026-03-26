@@ -64,7 +64,7 @@ for algo, lines in lines.items():
 
     # Set x, y limits and lists
     flat = subset[time_cols].values.flatten()
-    plt.xlim(1, len(df))
+    plt.xlim(1, len(df)/df['algorithm'].nunique())
     plt.ylim(np.percentile(flat, 0), np.percentile(flat, 97.5))
     
     x_list = subset['input_size']

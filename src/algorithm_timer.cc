@@ -59,6 +59,9 @@ int main(int argc, char* argv[]) {
     int m = 100;
 	int v = 100;
 
+    const char* algos[] = {(char*)"bubbleSort", (char*)"selectionSort", (char*)"insertionSort"};
+    int num_algos = sizeof(algos) / sizeof(algos[0]);
+
     // Set values from input
 	while((opt = getopt(argc, argv, "n:m:v:")) != -1) {
 		switch(opt) {
@@ -123,13 +126,6 @@ int main(int argc, char* argv[]) {
         }
         
         for(int i = 1; i <= n; ++i) {
-            // Initialize empty set of time values
-            double* times = (double*)calloc(m, sizeof(double));
-            if(!times) {
-                perror("Calloc failed.\n");
-                exit(1);
-            }
-
             //! removed edge case
             // // Edge case (n = 0)
             // if(i == 0) {
@@ -138,21 +134,42 @@ int main(int argc, char* argv[]) {
             //     continue;
             // }
             
-            for(int j = 0; j < m; ++j) {
-                int* arr = generate_random_array(i, v);
+            // Iterate through each algorithm
+            for(int a = 0; a < num_algos; ++a) {
+                // Initialize empty set of time values
+                double* times = (double*)calloc(m, sizeof(double));
+                if(!times) {
+                    perror("Calloc failed.\n");
+                    exit(1);
+                }
 
-                /* Time algorithm */
-                clock_t start = clock();
-                Algorithms::bubbleSort(arr, i);
-                clock_t end = clock();
+                // Run algorithm at each input_size m times
+                for(int j = 0; j < m; ++j) {
+                    int* arr = generate_random_array(i, v);
 
-                times[j] = (double) (end - start)/CLOCKS_PER_SEC;
-                free(arr);
+                    /* Time algorithm */
+                    clock_t start = clock();
+                    switch(a) {
+                        case 0:
+                            Algorithms::bubbleSort(arr, i);
+                            break;
+                        case 1:
+                            Algorithms::selectionSort(arr, i);
+                            break;
+                        case 2:
+                            Algorithms::insertionSort(arr, i);
+                            break;
+                    }
+                    clock_t end = clock();
+
+                    times[j] = (double) (end - start)/CLOCKS_PER_SEC;
+                    free(arr);
+                }
+
+                // Send information to python script
+                write_to_script(fd, buf, sizeof(buf), i, algos[a], times, m);
+                free(times);
             }
-
-            // Send information to python script
-            write_to_script(fd, buf, sizeof(buf), i, "bubbleSort", times, m);
-            free(times);
         }
 
         // Close write end of pipe (send EOF signal)
